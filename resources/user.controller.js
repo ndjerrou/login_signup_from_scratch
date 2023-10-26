@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('./user.model');
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
+const jwt = require('jsonwebtoken');
 
 module.exports = {
   signup: async (req, res) => {
@@ -32,7 +33,7 @@ module.exports = {
   login: async (req, res) => {
     // @TODO : Joi
 
-    const user = await User.findOne({ email: req.body.email }).exec();
+    const user = await User.findOne({ email: req.body.email });
 
     if (!user)
       return res.status(401).send({ ok: false, msg: 'Resource not found' });
@@ -42,6 +43,11 @@ module.exports = {
     if (!isValid)
       return res.status(400).send({ ok: false, msg: 'Bad request' });
 
-    res.send('ok');
+    const token = jwt.sign(
+      _.pick(user, 'login', 'email'),
+      process.env.PRIVATE_KEY
+    );
+
+    res.send({ ok: true, data: token });
   },
 };
